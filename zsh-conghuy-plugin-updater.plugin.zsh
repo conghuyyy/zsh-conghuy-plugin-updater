@@ -49,17 +49,17 @@ conghuy_update_plugins() {
 }
 
 # Manual command
-alias update-conghuy-plugins="conghuy_update_plugins"
+alias update_conghuy_plugins="conghuy_update_plugins"
 
 # Optional Y/n auto-update prompt once per session
 _conghuy_maybe_auto_update() {
-  echo -n "[conghuy-updater] Auto-check for updates this session? [Y/n] "
+  echo -n "[conghuy-updater] Update zsh plugins? [Y/n] "
   if read -q; then
     echo ""
     conghuy_update_plugins
   else
     echo ""
-    echo "[conghuy-updater] Skipped auto-update for this session."
+    echo "[conghuy-updater] Auto-update skipped for this session."
   fi
 }
 

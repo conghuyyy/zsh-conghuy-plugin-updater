@@ -21,7 +21,7 @@
 ## Manual update at any time:
 
 ```sh
-    update-conghuy-plugins
+    update_conghuy_plugins
 ```
 
 
