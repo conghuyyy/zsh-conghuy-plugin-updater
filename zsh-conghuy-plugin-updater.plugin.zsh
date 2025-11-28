@@ -60,7 +60,7 @@ _conghuy_check_updates() {
 
       # No SHA vars: just compare HEAD vs origin/main
       if ! git diff --quiet HEAD origin/main 2>/dev/null; then
-        printf '%b\n' "${CONGHUY_COLOR_YELLOW}[conghuy-updater]${CONGHUY_COLOR_RESET} New version available for ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}."
+        printf '%b\n' "${CONGHUY_COLOR_TAG}[conghuy-updater]${CONGHUY_COLOR_TAG} New version available for ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}."
         _CONGHUY_PENDING_UPDATES+=("$dir")
       else
         printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET} is up to date."
@@ -107,3 +107,27 @@ _conghuy_maybe_auto_update() {
 
 # Manual command: check + update
 alias update_conghuy_plugins='_conghuy_maybe_auto_update'
+
+# Self-update (manual)
+_conghuy_updater_self_update() {
+  local dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-conghuy-plugin-updater"
+
+  if [[ ! -d "$dir/.git" ]]; then
+    printf '%b\n' "${CONGHUY_COLOR_ERR}[conghuy-updater]${CONGHUY_COLOR_RESET} Self-update failed: not a git repository."
+    return 1
+  fi
+
+  (
+    cd "$dir" || return
+    printf '%b\n' "${CONGHUY_COLOR_TAG}[conghuy-updater]${CONGHUY_COLOR_RESET} Pulling latest version…"
+
+    if git pull --ff-only origin main; then
+      printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} Self-update complete."
+      printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} Restart your terminal or run: ${CONGHUY_COLOR_TAG}source ~/.zshrc${CONGHUY_COLOR_RESET}"
+    else
+      printf '%b\n' "${CONGHUY_COLOR_ERR}[conghuy-updater]${CONGHUY_COLOR_RESET} Self-update failed."
+    fi
+  )
+}
+
+alias self_update_conghuy_updater='_conghuy_updater_self_update'
