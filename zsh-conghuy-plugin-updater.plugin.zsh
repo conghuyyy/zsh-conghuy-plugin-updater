@@ -14,13 +14,13 @@ typeset -ga _CONGHUY_PENDING_UPDATES=()
 if [[ -t 1 ]]; then
   CONGHUY_COLOR_TAG=$'\033[36m'   # cyan
   CONGHUY_COLOR_OK=$'\033[32m'    # green
-  CONGHUY_COLOR_WARN=$'\033[33m'  # yellow
+  CONGHUY_COLOR_YELLOW=$'\033[33m'  # yellow
   CONGHUY_COLOR_ERR=$'\033[31m'   # red
   CONGHUY_COLOR_RESET=$'\033[0m'
 else
   CONGHUY_COLOR_TAG=""
   CONGHUY_COLOR_OK=""
-  CONGHUY_COLOR_WARN=""
+  CONGHUY_COLOR_YELLOW=""
   CONGHUY_COLOR_ERR=""
   CONGHUY_COLOR_RESET=""
 fi
@@ -35,7 +35,7 @@ _conghuy_resolve_plugin_dirs() {
     if [[ -d "$dir/.git" ]]; then
       _CONGHUY_PLUGIN_DIRS+=("$dir")
     else
-      printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} Plugin not found or missing git repo → $dir"
+      printf '%b\n' "${CONGHUY_COLOR_YELLOW}[conghuy-updater]${CONGHUY_COLOR_RESET} Plugin not found or missing git repo → $dir"
     fi
   done
 }
@@ -46,7 +46,7 @@ _conghuy_check_updates() {
 
   for dir in "${_CONGHUY_PLUGIN_DIRS[@]}"; do
     if [[ ! -d "$dir/.git" ]]; then
-      printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} Skipping $(basename "$dir") (no git repo)"
+      printf '%b\n' "${CONGHUY_COLOR_YELLOW}[conghuy-updater]${CONGHUY_COLOR_RESET} Skipping ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET} (no git repo)"
       continue
     fi
 
@@ -54,16 +54,16 @@ _conghuy_check_updates() {
       cd "$dir" || return
 
       git fetch origin main >/dev/null 2>&1 || {
-        printf '%b\n' "${CONGHUY_COLOR_ERR}[conghuy-updater]${CONGHUY_COLOR_RESET} Failed to fetch updates for $(basename "$dir")"
+        printf '%b\n' "${CONGHUY_COLOR_ERR}[conghuy-updater]${CONGHUY_COLOR_RESET} Failed to fetch updates for ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}"
         return
       }
 
       # No SHA vars: just compare HEAD vs origin/main
       if ! git diff --quiet HEAD origin/main 2>/dev/null; then
-        printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} New version available for $(basename "$dir")."
+        printf '%b\n' "${CONGHUY_COLOR_YELLOW}[conghuy-updater]${CONGHUY_COLOR_RESET} New version available for ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}."
         _CONGHUY_PENDING_UPDATES+=("$dir")
       else
-        printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} $(basename "$dir") is up to date."
+        printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET} is up to date."
       fi
     )
   done
@@ -79,7 +79,7 @@ conghuy_update_plugins() {
   for dir in "${_CONGHUY_PENDING_UPDATES[@]}"; do
     (
       cd "$dir" || return
-      printf '%b\n' "${CONGHUY_COLOR_TAG}[conghuy-updater]${CONGHUY_COLOR_RESET} Updating $(basename "$dir")..."
+      printf '%b\n' "${CONGHUY_COLOR_TAG}[conghuy-updater]${CONGHUY_COLOR_RESET} Updating ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}..."
       git pull --ff-only origin main
     )
   done
@@ -101,7 +101,7 @@ _conghuy_maybe_auto_update() {
     conghuy_update_plugins
   else
     printf '\n'
-    printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} Auto-update skipped for this session."
+    printf '%b\n' "${CONGHUY_COLOR_YELLOW}[conghuy-updater]${CONGHUY_COLOR_RESET} Auto-update skipped for this session."
   fi
 }
 
