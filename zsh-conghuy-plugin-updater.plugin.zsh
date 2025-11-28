@@ -69,9 +69,6 @@ conghuy_update_plugins() {
   done
 }
 
-# Manual command: check + update
-alias update_conghuy_plugins='_conghuy_check_updates; conghuy_update_plugins'
-
 # Optional Y/n auto-update prompt once per session
 _conghuy_maybe_auto_update() {
   # First: check if any plugins have new versions
@@ -96,8 +93,5 @@ _conghuy_maybe_auto_update() {
 # Do initial setup
 _conghuy_resolve_plugin_dirs
 
-# Run prompt once per session
-if [[ -z "$CONGHUY_AUTO_UPDATE_RAN" ]]; then
-  export CONGHUY_AUTO_UPDATE_RAN=1
-  _conghuy_maybe_auto_update
-fi
+# Manual command: check + update
+alias update_conghuy_plugins='_conghuy_maybe_auto_update'
