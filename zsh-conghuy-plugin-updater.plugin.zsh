@@ -123,7 +123,7 @@ _conghuy_updater_self_update() {
 
     if git pull --ff-only origin main; then
       printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} Self-update complete."
-      printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} Restart your terminal or run: ${CONGHUY_COLOR_TAG}source ~/.zshrc${CONGHUY_COLOR_RESET}"
+      printf '%b\n' "${CONGHUY_COLOR_YELLOW}[conghuy-updater]${CONGHUY_COLOR_RESET} Restart your terminal or run: ${CONGHUY_COLOR_TAG}source ~/.zshrc${CONGHUY_COLOR_RESET}"
     else
       printf '%b\n' "${CONGHUY_COLOR_ERR}[conghuy-updater]${CONGHUY_COLOR_RESET} Self-update failed."
     fi
