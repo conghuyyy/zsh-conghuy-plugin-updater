@@ -10,6 +10,21 @@ typeset -ga AUTO_UPDATE_ZSH_CONGHUY_PLUGINS
 typeset -ga _CONGHUY_PLUGIN_DIRS=()
 typeset -ga _CONGHUY_PENDING_UPDATES=()
 
+# Colors (only if stdout is a terminal)
+if [[ -t 1 ]]; then
+  CONGHUY_COLOR_TAG=$'\033[36m'   # cyan
+  CONGHUY_COLOR_OK=$'\033[32m'    # green
+  CONGHUY_COLOR_WARN=$'\033[33m'  # yellow
+  CONGHUY_COLOR_ERR=$'\033[31m'   # red
+  CONGHUY_COLOR_RESET=$'\033[0m'
+else
+  CONGHUY_COLOR_TAG=""
+  CONGHUY_COLOR_OK=""
+  CONGHUY_COLOR_WARN=""
+  CONGHUY_COLOR_ERR=""
+  CONGHUY_COLOR_RESET=""
+fi
+
 # Convert plugin names → full paths
 _conghuy_resolve_plugin_dirs() {
   _CONGHUY_PLUGIN_DIRS=()  # clear previous
@@ -20,7 +35,7 @@ _conghuy_resolve_plugin_dirs() {
     if [[ -d "$dir/.git" ]]; then
       _CONGHUY_PLUGIN_DIRS+=("$dir")
     else
-      echo "[conghuy-updater] Warning: plugin not found or missing git repo → $dir"
+      printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} Plugin not found or missing git repo → $dir"
     fi
   done
 }
@@ -31,67 +46,64 @@ _conghuy_check_updates() {
 
   for dir in "${_CONGHUY_PLUGIN_DIRS[@]}"; do
     if [[ ! -d "$dir/.git" ]]; then
-      echo "[conghuy-updater] Skipping $(basename "$dir") (no git repo)"
+      printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} Skipping $(basename "$dir") (no git repo)"
       continue
     fi
 
-    cd "$dir" || continue
+    (
+      cd "$dir" || return
 
-    git fetch origin main >/dev/null 2>&1 || {
-      echo "[conghuy-updater] Failed to fetch updates for $(basename "$dir")"
-      continue
-    }
+      git fetch origin main >/dev/null 2>&1 || {
+        printf '%b\n' "${CONGHUY_COLOR_ERR}[conghuy-updater]${CONGHUY_COLOR_RESET} Failed to fetch updates for $(basename "$dir")"
+        return
+      }
 
-    local local_sha remote_sha
-    local_sha=$(git rev-parse HEAD 2>/dev/null) || continue
-    remote_sha=$(git rev-parse origin/main 2>/dev/null) || continue
-
-    if [[ "$local_sha" != "$remote_sha" ]]; then
-      echo "[conghuy-updater] New version available for $(basename "$dir")."
-      _CONGHUY_PENDING_UPDATES+=("$dir")
-    else
-      echo "[conghuy-updater] $(basename "$dir") is up to date."
-    fi
+      # No SHA vars: just compare HEAD vs origin/main
+      if ! git diff --quiet HEAD origin/main 2>/dev/null; then
+        printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} New version available for $(basename "$dir")."
+        _CONGHUY_PENDING_UPDATES+=("$dir")
+      else
+        printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} $(basename "$dir") is up to date."
+      fi
+    )
   done
 }
 
 # Apply updates (only to plugins in _CONGHUY_PENDING_UPDATES)
 conghuy_update_plugins() {
   if (( ${#_CONGHUY_PENDING_UPDATES[@]} == 0 )); then
-    echo "[conghuy-updater] No updates to apply."
+    printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} No updates to apply."
     return 0
   fi
 
   for dir in "${_CONGHUY_PENDING_UPDATES[@]}"; do
-    cd "$dir" || continue
-    echo "[conghuy-updater] Updating $(basename "$dir")…"
-    git pull --ff-only origin main
+    (
+      cd "$dir" || return
+      printf '%b\n' "${CONGHUY_COLOR_TAG}[conghuy-updater]${CONGHUY_COLOR_RESET} Updating $(basename "$dir")..."
+      git pull --ff-only origin main
+    )
   done
 }
 
-# Optional Y/n auto-update prompt once per session
+# Optional Y/n auto-update prompt helper (runs resolve + check + maybe update)
 _conghuy_maybe_auto_update() {
-  # First: check if any plugins have new versions
+  _conghuy_resolve_plugin_dirs
   _conghuy_check_updates
 
-  # If nothing to update, don't bother asking
   if (( ${#_CONGHUY_PENDING_UPDATES[@]} == 0 )); then
     # Everything is up to date; silently exit
     return
   fi
 
-  echo -n "[conghuy-updater] Update zsh plugins now? [Y/n] "
+  printf '%b' "${CONGHUY_COLOR_TAG}[conghuy-updater]${CONGHUY_COLOR_RESET} Update zsh plugins now? [Y/n] "
   if read -q; then
-    echo ""
+    printf '\n'
     conghuy_update_plugins
   else
-    echo ""
-    echo "[conghuy-updater] Auto-update skipped for this session."
+    printf '\n'
+    printf '%b\n' "${CONGHUY_COLOR_WARN}[conghuy-updater]${CONGHUY_COLOR_RESET} Auto-update skipped for this session."
   fi
 }
-
-# Do initial setup
-_conghuy_resolve_plugin_dirs
 
 # Manual command: check + update
 alias update_conghuy_plugins='_conghuy_maybe_auto_update'
