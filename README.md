@@ -18,8 +18,14 @@
 )
 ```
 
-## Manual update at any time:
+## Manual update:
 
+* For itself:
+```sh
+    self_update_conghuy_updater
+```
+
+* For other plugins:
 ```sh
     update_conghuy_plugins
 ```

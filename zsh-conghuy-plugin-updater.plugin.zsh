@@ -12,10 +12,10 @@ typeset -ga _CONGHUY_PENDING_UPDATES=()
 
 # Colors (only if stdout is a terminal)
 if [[ -t 1 ]]; then
-  CONGHUY_COLOR_TAG=$'\033[36m'   # cyan
-  CONGHUY_COLOR_OK=$'\033[32m'    # green
-  CONGHUY_COLOR_YELLOW=$'\033[33m'  # yellow
-  CONGHUY_COLOR_ERR=$'\033[31m'   # red
+  CONGHUY_COLOR_TAG=$'\033[36m'      # cyan
+  CONGHUY_COLOR_OK=$'\033[32m'       # green
+  CONGHUY_COLOR_YELLOW=$'\033[33m'   # yellow
+  CONGHUY_COLOR_ERR=$'\033[31m'      # red
   CONGHUY_COLOR_RESET=$'\033[0m'
 else
   CONGHUY_COLOR_TAG=""
@@ -50,22 +50,25 @@ _conghuy_check_updates() {
       continue
     fi
 
-    (
-      cd "$dir" || return
+    # Stay in the same shell; save and restore PWD
+    local oldpwd=$PWD
+    cd "$dir" || continue
 
-      git fetch origin main >/dev/null 2>&1 || {
-        printf '%b\n' "${CONGHUY_COLOR_ERR}[conghuy-updater]${CONGHUY_COLOR_RESET} Failed to fetch updates for ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}"
-        return
-      }
+    git fetch origin main >/dev/null 2>&1 || {
+      printf '%b\n' "${CONGHUY_COLOR_ERR}[conghuy-updater]${CONGHUY_COLOR_RESET} Failed to fetch updates for ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}"
+      cd "$oldpwd"
+      continue
+    }
 
-      # No SHA vars: just compare HEAD vs origin/main
-      if ! git diff --quiet HEAD origin/main 2>/dev/null; then
-        printf '%b\n' "${CONGHUY_COLOR_TAG}[conghuy-updater]${CONGHUY_COLOR_TAG} New version available for ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}."
-        _CONGHUY_PENDING_UPDATES+=("$dir")
-      else
-        printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET} is up to date."
-      fi
-    )
+    # No SHA vars: just compare HEAD vs origin/main
+    if ! git diff --quiet HEAD origin/main 2>/dev/null; then
+      printf '%b\n' "${CONGHUY_COLOR_TAG}[conghuy-updater]${CONGHUY_COLOR_RESET} New version available for ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET}."
+      _CONGHUY_PENDING_UPDATES+=("$dir")
+    else
+      printf '%b\n' "${CONGHUY_COLOR_OK}[conghuy-updater]${CONGHUY_COLOR_RESET} ${CONGHUY_COLOR_YELLOW}$(basename "$dir")${CONGHUY_COLOR_RESET} is up to date."
+    fi
+
+    cd "$oldpwd"
   done
 }
 
